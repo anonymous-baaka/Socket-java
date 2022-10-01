@@ -6,7 +6,6 @@ class MyServerClientThread extends Thread{
 	int clientID;
 	int result;
 	Socket s_clientSocket;
-	private DataOutputStream out=null;
 	MyServerClientThread(Socket _clientSocket, int _clientID){
 		s_clientSocket=_clientSocket;
 		clientID=_clientID;
@@ -23,8 +22,10 @@ class MyServerClientThread extends Thread{
 				System.out.println("From Client-" +clientID+ ": Number is :"+clientMessage);
 				result = Integer.parseInt(clientMessage.split(" ")[0]) + Integer.parseInt(clientMessage.split(" ")[1]);
 				serverMessage="From Server to Client-" + clientID + " sum is " +result;
+				System.out.println("Result= "+result+"\n Sending Result to controller...");
 				outStream.writeUTF(serverMessage);
 				outStream.flush();
+				System.out.println("Result sent!!");
 			}
 			inStream.close();
 			outStream.close();
@@ -41,7 +42,7 @@ public class Server
 	public static void main(String[] args) throws Exception
 	{
 		try{
-			ServerSocket server=new ServerSocket(8888);
+			ServerSocket server=new ServerSocket(8889);
 			int clientID=0;
       		System.out.println("Server Started ....");
 
