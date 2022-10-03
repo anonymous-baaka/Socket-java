@@ -20,7 +20,9 @@ class MyServerClientThread extends Thread{
 			while(!clientMessage.equals("bye")){
 				clientMessage=inStream.readUTF();
 				System.out.println("From Client-" +clientID+ ": Number is :"+clientMessage);
+				Thread.sleep(5000);
 				result = Integer.parseInt(clientMessage.split(" ")[0]) + Integer.parseInt(clientMessage.split(" ")[1]);
+				
 				serverMessage="From Server to Client-" + clientID + " sum is " +result;
 				System.out.println("Result= "+result+"\n Sending Result to controller...");
 				outStream.writeUTF(serverMessage);
