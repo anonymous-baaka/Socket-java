@@ -8,10 +8,16 @@ class Request
 {
     int clientID;
     String timestamp;
-    Request(int _clientID,String _timestamp)
+    String clientIp;
+    enum Status{
+        COMPLETED,PROCESSING,FINISHED,ERROR
+    }
+    Request(int _clientID,String _timestamp,String _clIp)
     {
         clientID=_clientID;
         timestamp=_timestamp;
+        clientIp=_clIp;
+        Status status=Status.PROCESSING;
     }
 }
 class ControllerThread extends Thread
@@ -24,15 +30,20 @@ class ControllerThread extends Thread
 	int result;
 	Socket cl_coSocket;     //client-->controller socket
     Socket co_svSocket;
+    String cl_ip;
 
 	ControllerThread(Socket _clientSocket){
 		cl_coSocket=_clientSocket;
 		clientID=ClassclientID;
+        cl_ip=_clientSocket.getLocalAddress().toString().substring(1);
 
         ClassclientID++;
 
         try{
         co_svSocket=new Socket("127.0.0.1",8889);
+        DataInputStream inStream=new DataInputStream(co_svSocket.getInputStream());
+        String serverResultReply=inStream.readUTF();
+        System.out.println(serverResultReply);
 
         }catch(Exception e){
             System.out.println(e);
@@ -55,7 +66,7 @@ class ControllerThread extends Thread
                 System.out.println("From Client-" +clientID+ ": Number is :"+clientMessage);
 
                 String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new java.util.Date());
-                insertRequest(new Request(clientID,timeStamp));
+                insertRequest(new Request(clientID,timeStamp,cl_ip));
                 
                 DataOutputStream outStream = new DataOutputStream(co_svSocket.getOutputStream());
                 outStream.writeUTF(clientMessage);
@@ -71,7 +82,7 @@ class ControllerThread extends Thread
                     co_clOutStream.flush();
                     System.out.println("result sent to client successfully!");
 
-                    removeRequest(new Request(clientID,timeStamp));
+                    removeRequest(new Request(clientID,timeStamp,cl_ip));
                 }
 
             }
@@ -93,11 +104,12 @@ class ControllerThread extends Thread
         ArrayList<Request>requestQueueTemp = new ArrayList<Request>();// myrequestqueue.arr.clone();
         requestQueueTemp=myrequestqueue.getArray();
 
+        System.out.println("Client ID\tClient Ip\t Timestamp");
         System.out.println("--------------------------------------");
         //requestQueueTemp.
         for(Request request: requestQueueTemp)
         {
-            System.out.println(request.clientID+"\t"+request.timestamp);
+            System.out.println(request.clientID+"\t\t"+request.clientIp+"\t"+request.timestamp);
         }
         System.out.println("--------------------------------------");
     }

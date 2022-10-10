@@ -19,7 +19,7 @@ public class MyRequestQueue {
     }
     void push(Request request)
     {
-        System.out.println("PUSHED: "+request.clientID+" "+request.timestamp);
+        System.out.println("PUSHED: "+request.clientID+" "+request.clientIp+" "+request.timestamp);
         arr.add(request);
         //arr.
         ptr++;
@@ -41,7 +41,7 @@ public class MyRequestQueue {
     {
         for(int i=0;i<arr.size();i++)
         {
-            if(arr.get(i).clientID==request.clientID && arr.get(i).timestamp==request.timestamp)
+            if(arr.get(i).clientID==request.clientID && arr.get(i).timestamp==request.timestamp && arr.get(i).clientIp==request.clientIp)
             {
                 arr.remove(i);
                 return true;
@@ -53,19 +53,19 @@ public class MyRequestQueue {
     {
         for(Request req: arr)
         {
-            System.out.println(req.clientID+"\t"+req.timestamp);
+            System.out.println(req.clientID+"\t"+req.clientIp+"\t"+req.timestamp);
         }
     }
     int size()
     {
         return arr.size();
     }
-    public static void main(String args[])
+    /*public static void main(String args[])
     {
         MyRequestQueue myRequestQueue=new MyRequestQueue();
         myRequestQueue.push(new Request(0, null));
         myRequestQueue.push(new Request(10, null));
         myRequestQueue.push(new Request(20, null));
         myRequestQueue.display();
-    }
+    }*/
 }
