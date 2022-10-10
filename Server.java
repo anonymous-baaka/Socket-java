@@ -17,10 +17,18 @@ class MyServerClientThread extends Thread{
 			DataInputStream inStream = new DataInputStream(s_clientSocket.getInputStream());
 			DataOutputStream outStream = new DataOutputStream(s_clientSocket.getOutputStream());
 			String clientMessage="", serverMessage="";
+			//
+			System.out.println(" >> " + "Client No:" + clientID + " assigned to thread: "+Thread.currentThread().getId());
+			serverMessage="Client No:" + clientID + " assigned to thread: "+Thread.currentThread().getId();
+			outStream.writeUTF(serverMessage);
+			outStream.flush();
+
 			while(!clientMessage.equals("bye")){
 				clientMessage=inStream.readUTF();
 				System.out.println("From Client-" +clientID+ ": Number is :"+clientMessage);
+				Thread.sleep(5000);
 				result = Integer.parseInt(clientMessage.split(" ")[0]) + Integer.parseInt(clientMessage.split(" ")[1]);
+				
 				serverMessage="From Server to Client-" + clientID + " sum is " +result;
 				System.out.println("Result= "+result+"\n Sending Result to controller...");
 				outStream.writeUTF(serverMessage);
@@ -48,7 +56,7 @@ public class Server
 
 			while(true){
 			Socket serverClient=server.accept();  //server accept the client connection request
-			System.out.println(" >> " + "Client No:" + clientID + " started!");
+			//System.out.println(" >> " + "Client No:" + clientID + " started!");
 			MyServerClientThread sct = new MyServerClientThread(serverClient,clientID); //send  the request to a separate thread
 			sct.start();
 			clientID++;
