@@ -9,15 +9,18 @@ class Request
     int clientID;
     String timestamp;
     String clientIp;
-    enum Status{
+    long serverThreadID;
+    public enum Status{
         COMPLETED,PROCESSING,FINISHED,ERROR
     }
-    Request(int _clientID,String _timestamp,String _clIp)
+    Status status;
+    Request(int _clientID,String _timestamp,String _clIp,long _serverThreadID)
     {
         clientID=_clientID;
         timestamp=_timestamp;
         clientIp=_clIp;
-        Status status=Status.PROCESSING;
+        status=Status.PROCESSING;
+        serverThreadID=_serverThreadID;
     }
 }
 class ControllerThread extends Thread
@@ -28,6 +31,7 @@ class ControllerThread extends Thread
     static int ClassclientID=0;
     int clientID;
 	int result;
+    long serverThreadID;
 	Socket cl_coSocket;     //client-->controller socket
     Socket co_svSocket;
     String cl_ip;
@@ -41,10 +45,13 @@ class ControllerThread extends Thread
 
         try{
         co_svSocket=new Socket("127.0.0.1",8889);
+        //server sends thread id
         DataInputStream inStream=new DataInputStream(co_svSocket.getInputStream());
         String serverResultReply=inStream.readUTF();
         System.out.println(serverResultReply);
 
+        //Client No:1 assigned to thread: 14
+        serverThreadID=Long.parseLong(serverResultReply.split(":")[2].toString().strip());
         }catch(Exception e){
             System.out.println(e);
         }
@@ -66,7 +73,7 @@ class ControllerThread extends Thread
                 System.out.println("From Client-" +clientID+ ": Number is :"+clientMessage);
 
                 String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new java.util.Date());
-                insertRequest(new Request(clientID,timeStamp,cl_ip));
+                insertRequest(new Request(clientID,timeStamp,cl_ip,serverThreadID));
                 
                 DataOutputStream outStream = new DataOutputStream(co_svSocket.getOutputStream());
                 outStream.writeUTF(clientMessage);
@@ -82,7 +89,7 @@ class ControllerThread extends Thread
                     co_clOutStream.flush();
                     System.out.println("result sent to client successfully!");
 
-                    removeRequest(new Request(clientID,timeStamp,cl_ip));
+                    removeRequest(new Request(clientID,timeStamp,cl_ip,serverThreadID));
                 }
 
             }
@@ -104,14 +111,15 @@ class ControllerThread extends Thread
         ArrayList<Request>requestQueueTemp = new ArrayList<Request>();// myrequestqueue.arr.clone();
         requestQueueTemp=myrequestqueue.getArray();
 
-        System.out.println("Client ID\tClient Ip\t Timestamp");
-        System.out.println("--------------------------------------");
+        System.out.println("----------------------------------------------------------------------------");
+        System.out.println("Client ID\tClient Ip\t Timestamp\t\tStatus\t\tThread");
+        System.out.println("----------------------------------------------------------------------------");
         //requestQueueTemp.
         for(Request request: requestQueueTemp)
         {
-            System.out.println(request.clientID+"\t\t"+request.clientIp+"\t"+request.timestamp);
+            System.out.println(request.clientID+"\t\t"+request.clientIp+"\t"+request.timestamp+"\t"+request.status+"\t"+request.serverThreadID);
         }
-        System.out.println("--------------------------------------");
+        System.out.println("----------------------------------------------------------------------------");
     }
 
     void removeRequest(Request request)

@@ -43,7 +43,8 @@ public class MyRequestQueue {
         {
             if(arr.get(i).clientID==request.clientID && arr.get(i).timestamp==request.timestamp && arr.get(i).clientIp==request.clientIp)
             {
-                arr.remove(i);
+                //arr.remove(i);
+                arr.get(i).status=Request.Status.COMPLETED;
                 return true;
             }
         }
