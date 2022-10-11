@@ -39,12 +39,13 @@ class ControllerThread extends Thread
 	ControllerThread(Socket _clientSocket){
 		cl_coSocket=_clientSocket;
 		clientID=ClassclientID;
-        cl_ip=_clientSocket.getLocalAddress().toString().substring(1);
-
+        cl_ip=_clientSocket.getInetAddress().toString().substring(1);
+        //cl_ip=_clientSocket.getInetAddress()
         ClassclientID++;
 
         try{
-        co_svSocket=new Socket("127.0.0.1",8889);
+        co_svSocket=new Socket("10.60.17.62",8889);
+
         //server sends thread id
         DataInputStream inStream=new DataInputStream(co_svSocket.getInputStream());
         String serverResultReply=inStream.readUTF();
@@ -112,8 +113,9 @@ class ControllerThread extends Thread
         requestQueueTemp=myrequestqueue.getArray();
 
         System.out.println("----------------------------------------------------------------------------");
-        System.out.println("Client ID\tClient Ip\t Timestamp\t\tStatus\t\tThread");
+        System.out.println("Client ID\tClient Ip\t Timestamp\t\tStatus\t\tThread ID");
         System.out.println("----------------------------------------------------------------------------");
+        
         //requestQueueTemp.
         for(Request request: requestQueueTemp)
         {
