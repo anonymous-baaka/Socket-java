@@ -45,6 +45,7 @@ class ControllerThread extends Thread
 
         try{
         co_svSocket=new Socket("10.60.17.62",8889);
+
         //server sends thread id
         DataInputStream inStream=new DataInputStream(co_svSocket.getInputStream());
         String serverResultReply=inStream.readUTF();
@@ -114,6 +115,7 @@ class ControllerThread extends Thread
         System.out.println("----------------------------------------------------------------------------");
         System.out.println("Client ID\tClient Ip\t Timestamp\t\tStatus\t\tThread ID");
         System.out.println("----------------------------------------------------------------------------");
+        
         //requestQueueTemp.
         for(Request request: requestQueueTemp)
         {
