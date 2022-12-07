@@ -8,21 +8,25 @@ public class Client {
 		DataInputStream inStream=new DataInputStream(socket.getInputStream());
 		DataOutputStream outStream=new DataOutputStream(socket.getOutputStream());
 		BufferedReader br=new BufferedReader(new InputStreamReader(System.in));
-		String clientMessage="",serverMessage="";
+		String clientMessage="",serverMessage="",controllerMessage="";
 
-		while(!clientMessage.equals("bye")){
-			System.out.println("Enter number :");
-			clientMessage=br.readLine();
-			outStream.writeUTF(clientMessage);
-			outStream.flush();
-			serverMessage=inStream.readUTF();
-			System.out.println(serverMessage);
+		//while(!clientMessage.equals("bye"))
+		{
+			System.out.println("Welcome!!\nPlease wait...");
+			controllerMessage=inStream.readUTF();
+			System.out.println(controllerMessage);
+
+			controllerMessage=inStream.readUTF();
+			System.out.println(controllerMessage);
+
+			controllerMessage=inStream.readUTF();
+			System.out.println(controllerMessage);
 		}
 		outStream.close();
     	outStream.close();
     	socket.close();
 	}catch(Exception e){
-		System.out.println(e);
+		System.out.println("exception at 26: "+e);
 	}
 	}
 }

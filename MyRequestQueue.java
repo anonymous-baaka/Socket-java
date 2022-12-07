@@ -50,6 +50,28 @@ public class MyRequestQueue {
         }
         return false;
     }
+
+    Boolean update(Request request,char ch)
+    {
+
+       for(int i=0;i<arr.size();i++)
+        {
+            if(arr.get(i).clientID==request.clientID && arr.get(i).timestamp==request.timestamp && arr.get(i).clientIp==request.clientIp)
+            {
+                //arr.remove(i);
+                if(ch=='W')
+                    arr.get(i).status=Request.Status.WAITING;
+                else if(ch=='P')
+                    arr.get(i).status=Request.Status.PROCESSING;
+                else
+                    arr.get(i).status=Request.Status.COMPLETED;
+
+                return true;
+            }
+        }
+        return false;
+    }
+
     void display()
     {
         for(Request req: arr)

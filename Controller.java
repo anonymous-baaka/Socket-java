@@ -1,4 +1,5 @@
 import java.net.*;
+import java.security.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -10,41 +11,77 @@ class Request
     String timestamp;
     String clientIp;
     long serverThreadID;
+    int tokenNumber;
+    int windowNumber;
     public enum Status{
-        COMPLETED,PROCESSING,FINISHED,ERROR
+        COMPLETED,PROCESSING,FINISHED,ERROR,WAITING
     }
     Status status;
-    Request(int _clientID,String _timestamp,String _clIp,long _serverThreadID)
+    Request(int _clientID,String _timestamp,String _clIp,long _serverThreadID,int _tokenNumber,int _windowNumber)
     {
         clientID=_clientID;
         timestamp=_timestamp;
         clientIp=_clIp;
+
         status=Status.PROCESSING;
+        if(MyServerClientThread.getClassWindowsIsBusyStatus()[_windowNumber]==true)
+            status=Status.WAITING;
+        
         serverThreadID=_serverThreadID;
+        tokenNumber=_tokenNumber;
+        windowNumber=_windowNumber;
     }
 }
 class ControllerThread extends Thread
 {
     int nThreads;
+    static int ClasstokenNumber=0;
     //final static ArrayDeque<Request>requestQueue=new ArrayDeque<Request>();
     final static MyRequestQueue myrequestqueue=new MyRequestQueue();
     static int ClassclientID=0;
+    static int ClassToBeAssignedWindowNumber=0;
+
+    int windowNumber;
+    int tokenNumber;
     int clientID;
 	int result;
     long serverThreadID;
 	Socket cl_coSocket;     //client-->controller socket
     Socket co_svSocket;
+    Socket co_clSocket;
     String cl_ip;
+    int cl_port; 
+    int TotalnWindows=3;
 
 	ControllerThread(Socket _clientSocket){
 		cl_coSocket=_clientSocket;
 		clientID=ClassclientID;
+        tokenNumber=ClasstokenNumber;
         cl_ip=_clientSocket.getInetAddress().toString().substring(1);
+        cl_port=_clientSocket.getPort();
         //cl_ip=_clientSocket.getInetAddress()
         ClassclientID++;
+        ClasstokenNumber++;
+        windowNumber=getWindowNumber();
 
         try{
-        co_svSocket=new Socket("10.60.17.62",8889);
+            //co_clSocket=new Socket("127.0.0.1",cl_port);        //cli ip, cli port
+            DataOutputStream outStream = new DataOutputStream(cl_coSocket.getOutputStream());
+            String clientMessage="Assigned Token no #"+tokenNumber;
+            
+            outStream.flush();
+            outStream.writeUTF(clientMessage);
+
+            clientMessage="Assigned window number: "+windowNumber;
+            outStream.flush();
+            outStream.writeUTF(clientMessage);
+            
+        }catch(Exception e){
+            System.out.println(e);
+        }
+
+        try{
+        co_svSocket=new Socket("127.0.0.1",8889);
 
         //server sends thread id
         DataInputStream inStream=new DataInputStream(co_svSocket.getInputStream());
@@ -69,12 +106,12 @@ class ControllerThread extends Thread
             String clientMessage="";
             String serverMessage="";
 
-            while(!clientMessage.equals("bye")){
-                clientMessage=cl_inStream.readUTF();
-                System.out.println("From Client-" +clientID+ ": Number is :"+clientMessage);
-
+            {   
+                
                 String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new java.util.Date());
-                insertRequest(new Request(clientID,timeStamp,cl_ip,serverThreadID));
+
+                clientMessage=tokenNumber+"#"+clientID+"#"+timeStamp+"#"+windowNumber;
+                insertRequest(new Request(clientID,timeStamp,cl_ip,serverThreadID,tokenNumber,windowNumber));
                 
                 DataOutputStream outStream = new DataOutputStream(co_svSocket.getOutputStream());
                 outStream.writeUTF(clientMessage);
@@ -84,13 +121,31 @@ class ControllerThread extends Thread
 
                 if(serverResultReply!=null)
                 {
-                    System.out.println("result recieved from Server: "+serverResultReply+". Sending to client...");
-                    DataOutputStream co_clOutStream=new DataOutputStream(cl_coSocket.getOutputStream());
-                    co_clOutStream.writeUTF(serverResultReply);
-                    co_clOutStream.flush();
-                    System.out.println("result sent to client successfully!");
-
-                    removeRequest(new Request(clientID,timeStamp,cl_ip,serverThreadID));
+                    if(serverResultReply.equals("BUSY"))
+                    {
+                        //System.out.println(serverResultReply+"\n");
+                        removeRequest(new Request(clientID,timeStamp,cl_ip,serverThreadID,tokenNumber,windowNumber),'W');
+                        serverResultReply=inStream.readUTF();
+                    }
+                    if(serverResultReply.equals("PROCESSING"))
+                    {
+                        //System.out.println(serverResultReply+"\n");
+                        removeRequest(new Request(clientID,timeStamp,cl_ip,serverThreadID,tokenNumber,windowNumber),'P');
+                        serverResultReply=inStream.readUTF();
+                    }
+                    if(serverResultReply.equals("DONE"))
+                    {
+                        //System.out.println(serverResultReply+"\n");
+                        removeRequest(new Request(clientID,timeStamp,cl_ip,serverThreadID,tokenNumber,windowNumber),'C');
+                        //send done to client
+                        
+                    }
+                    outStream = new DataOutputStream(cl_coSocket.getOutputStream());
+                    clientMessage="FINISHED";
+                
+                    outStream.flush();
+                    outStream.writeUTF(clientMessage);
+                    
                 }
 
             }
@@ -105,6 +160,12 @@ class ControllerThread extends Thread
     }
 
     
+    int getWindowNumber()       //TODO
+    {
+        return (ClassToBeAssignedWindowNumber++)%TotalnWindows;
+    }
+
+    
     void displayQueue()
     {
         //ArrayList<Request>a=new ArrayList<Request>();
@@ -113,20 +174,20 @@ class ControllerThread extends Thread
         requestQueueTemp=myrequestqueue.getArray();
 
         System.out.println("----------------------------------------------------------------------------");
-        System.out.println("Client ID\tClient Ip\t Timestamp\t\tStatus\t\tThread ID");
+        System.out.println("Token Number\tWindow Number\tClient ID\tClient Ip\t Timestamp\t\tStatus\t\tThread ID");
         System.out.println("----------------------------------------------------------------------------");
         
         //requestQueueTemp.
         for(Request request: requestQueueTemp)
         {
-            System.out.println(request.clientID+"\t\t"+request.clientIp+"\t"+request.timestamp+"\t"+request.status+"\t"+request.serverThreadID);
+            System.out.println(request.tokenNumber+"\t\t"+request.windowNumber+"\t\t"+ request.clientID+"\t\t"+request.clientIp+"\t"+request.timestamp+"\t"+request.status+"\t"+request.serverThreadID);
         }
         System.out.println("----------------------------------------------------------------------------");
     }
 
-    void removeRequest(Request request)
+    void removeRequest(Request request,char ch)
     {
-        System.out.println("pop= "+myrequestqueue.pop(request));
+        System.out.println("pop= "+myrequestqueue.update(request,ch));
         displayQueue();
     }
 

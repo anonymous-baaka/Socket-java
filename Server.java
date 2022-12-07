@@ -3,9 +3,21 @@ import java.net.*;
 import java.io.*;
 
 class MyServerClientThread extends Thread{
+	static int delays[]={10,5,8};
 	int clientID;
 	int result;
+	int tokenNumber;
+    int windowNumber;
+	String timestamp;
 	Socket s_clientSocket;
+
+	static int ClassNoOfWindows=3;
+	static boolean ClassWindowsIsBusyStatus[]=new boolean[ClassNoOfWindows]; 
+
+	public static boolean[] getClassWindowsIsBusyStatus() {
+		return ClassWindowsIsBusyStatus;
+	}
+	
 	MyServerClientThread(Socket _clientSocket, int _clientID){
 		s_clientSocket=_clientSocket;
 		clientID=_clientID;
@@ -16,24 +28,57 @@ class MyServerClientThread extends Thread{
 		{
 			DataInputStream inStream = new DataInputStream(s_clientSocket.getInputStream());
 			DataOutputStream outStream = new DataOutputStream(s_clientSocket.getOutputStream());
-			String clientMessage="", serverMessage="";
+			String clientMessage[];
+			String serverMessage="";
 			//
 			System.out.println(" >> " + "Client No:" + clientID + " assigned to thread: "+Thread.currentThread().getId());
 			serverMessage="Client No:" + clientID + " assigned to thread: "+Thread.currentThread().getId();
 			outStream.writeUTF(serverMessage);
 			outStream.flush();
 
-			while(!clientMessage.equals("bye")){
-				clientMessage=inStream.readUTF();
-				System.out.println("From Client-" +clientID+ ": Number is :"+clientMessage);
-				Thread.sleep(5000);
-				result = Integer.parseInt(clientMessage.split(" ")[0]) + Integer.parseInt(clientMessage.split(" ")[1]);
-				
-				serverMessage="From Server to Client-" + clientID + " sum is " +result;
-				System.out.println("Result= "+result+"\n Sending Result to controller...");
+			{
+				String tmpStr=inStream.readUTF().toString();
+				System.out.println("tm,pstr= "+tmpStr);
+
+				clientMessage=tmpStr.split("#");
+				//
+				for(String s:clientMessage)
+				{
+					System.out.println(s);
+				}
+				tokenNumber=Integer.parseInt(clientMessage[0]);
+				timestamp=clientMessage[2];
+				windowNumber=Integer.parseInt(clientMessage[3]);
+
+				if(ClassWindowsIsBusyStatus[windowNumber]==true)
+				{
+					serverMessage="BUSY";
+					outStream.writeUTF(serverMessage);
+					outStream.flush();
+
+					while(ClassWindowsIsBusyStatus[windowNumber]==true){
+						System.out.println(" ");
+					}
+				}
+
+				serverMessage="PROCESSING";
+				ClassWindowsIsBusyStatus[windowNumber]=true;
 				outStream.writeUTF(serverMessage);
 				outStream.flush();
-				System.out.println("Result sent!!");
+
+				int expectedTimeofCompletion=(int)(1000+Math.random()*10000);
+				Thread.sleep(5000);
+				System.out.println("expectedTimeofCompletion "+expectedTimeofCompletion+"\n");
+				
+				//serverMessage="Token #"+tokenNumber+" serviced successuflly!";
+				serverMessage="DONE";
+				ClassWindowsIsBusyStatus[windowNumber]=false;
+
+				System.out.println("toekn "+tokenNumber+" set "+ClassWindowsIsBusyStatus[windowNumber]+"\n");
+
+				outStream.writeUTF(serverMessage);
+				outStream.flush();
+				//System.out.println("Result sent!!");
 			}
 			inStream.close();
 			outStream.close();
@@ -41,14 +86,25 @@ class MyServerClientThread extends Thread{
 		}catch(Exception ex){
 			System.out.println(ex);
 		}finally{
+			ClassWindowsIsBusyStatus[windowNumber]=false;
 			System.out.println("Client -" + clientID + " exit!! ");
 		}
+	}
+
+	int getDelay(int i)
+	{
+		return delays[i]*1000;
 	}
 }
 public class Server
 {
 	public static void main(String[] args) throws Exception
 	{
+		//
+		/*for(int i=0;;i++)
+		{
+			ClassWindowsStatus[i]=false;
+		}*/
 		try{
 			ServerSocket server=new ServerSocket(8889);
 			int clientID=0;
