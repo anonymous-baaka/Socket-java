@@ -31,21 +31,20 @@ class MyServerClientThread extends Thread{
 			String clientMessage[];
 			String serverMessage="";
 			//
-			System.out.println(" >> " + "Client No:" + clientID + " assigned to thread: "+Thread.currentThread().getId());
+			//System.out.println(" >> " + "Client No:" + clientID + " assigned to thread: "+Thread.currentThread().getId());
 			serverMessage="Client No:" + clientID + " assigned to thread: "+Thread.currentThread().getId();
 			outStream.writeUTF(serverMessage);
 			outStream.flush();
 
 			{
 				String tmpStr=inStream.readUTF().toString();
-				System.out.println("tm,pstr= "+tmpStr);
 
 				clientMessage=tmpStr.split("#");
 				//
-				for(String s:clientMessage)
+				/*for(String s:clientMessage)
 				{
 					System.out.println(s);
-				}
+				}*/
 				tokenNumber=Integer.parseInt(clientMessage[0]);
 				timestamp=clientMessage[2];
 				windowNumber=Integer.parseInt(clientMessage[3]);
@@ -57,24 +56,25 @@ class MyServerClientThread extends Thread{
 					outStream.flush();
 
 					while(ClassWindowsIsBusyStatus[windowNumber]==true){
-						System.out.println(" ");
+						System.out.print("");
 					}
 				}
 
+				System.out.println("Token "+tokenNumber+" servicing at window "+windowNumber);
 				serverMessage="PROCESSING";
 				ClassWindowsIsBusyStatus[windowNumber]=true;
 				outStream.writeUTF(serverMessage);
 				outStream.flush();
 
 				int expectedTimeofCompletion=(int)(1000+Math.random()*10000);
-				Thread.sleep(5000);
-				System.out.println("expectedTimeofCompletion "+expectedTimeofCompletion+"\n");
+				Thread.sleep(expectedTimeofCompletion);
+				System.out.println("expected Time of Completion for Token "+ tokenNumber+" = " +expectedTimeofCompletion+"ms");
 				
 				//serverMessage="Token #"+tokenNumber+" serviced successuflly!";
 				serverMessage="DONE";
 				ClassWindowsIsBusyStatus[windowNumber]=false;
 
-				System.out.println("toekn "+tokenNumber+" set "+ClassWindowsIsBusyStatus[windowNumber]+"\n");
+				//System.out.println("toekn "+tokenNumber+" set "+ClassWindowsIsBusyStatus[windowNumber]+"\n");
 
 				outStream.writeUTF(serverMessage);
 				outStream.flush();
@@ -87,7 +87,7 @@ class MyServerClientThread extends Thread{
 			System.out.println(ex);
 		}finally{
 			ClassWindowsIsBusyStatus[windowNumber]=false;
-			System.out.println("Client -" + clientID + " exit!! ");
+			System.out.println("Patient " + tokenNumber + " successfully vaccinated!! ");
 		}
 	}
 
@@ -100,11 +100,6 @@ public class Server
 {
 	public static void main(String[] args) throws Exception
 	{
-		//
-		/*for(int i=0;;i++)
-		{
-			ClassWindowsStatus[i]=false;
-		}*/
 		try{
 			ServerSocket server=new ServerSocket(8889);
 			int clientID=0;

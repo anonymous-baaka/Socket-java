@@ -174,13 +174,13 @@ class ControllerThread extends Thread
         requestQueueTemp=myrequestqueue.getArray();
 
         System.out.println("----------------------------------------------------------------------------");
-        System.out.println("Token Number\tWindow Number\tClient ID\tClient Ip\t Timestamp\t\tStatus\t\tThread ID");
+        System.out.println("Token Number\tWindow Number\tClient ID\tClient Ip\t Timestamp\t\tStatus\t");
         System.out.println("----------------------------------------------------------------------------");
         
         //requestQueueTemp.
         for(Request request: requestQueueTemp)
         {
-            System.out.println(request.tokenNumber+"\t\t"+request.windowNumber+"\t\t"+ request.clientID+"\t\t"+request.clientIp+"\t"+request.timestamp+"\t"+request.status+"\t"+request.serverThreadID);
+            System.out.println(request.tokenNumber+"\t\t"+request.windowNumber+"\t\t"+ request.clientID+"\t\t"+request.clientIp+"\t"+request.timestamp+"\t"+request.status+"\t");
         }
         System.out.println("----------------------------------------------------------------------------");
     }
